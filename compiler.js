@@ -18,7 +18,7 @@ for (let i = 0; i < args.length; i++) {
     picvars = false;
   } 
   else if (args[i] == "-nonameupper") {
-    no_name_upper = false;
+    no_name_upper = true;
   }
   else {
     file = args[i];
