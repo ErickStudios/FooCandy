@@ -13,6 +13,7 @@ class Enums {
 }
 
 var ActualTarget = Enums.Targets.I386ProtectedMode;
+var AllowStackPic = true;
 
 function candyVarToRegister(candyVar) {
   switch (candyVar) {
@@ -433,12 +434,13 @@ DATA_MODUCANDY_DATA_GETEIP:
   }
 
   
-  return {codeRet: codeRet , dataSection: dataSection , datasReal: datasReal, datasFunctions: datasFunctions, final:codeRet+dataSection+datasReal+datasFunctions , Symbols:Symbols};
+  return {codeRet: codeRet , dataSection: dataSection , datasReal: datasReal, datasFunctions: datasFunctions, final:codeRet+(AllowStackPic == true ? dataSection+datasReal+datasFunctions : "") , Symbols:Symbols};
 }
 
-function parseCode(code, target)
+function parseCode(code, target, allowPic)
 {
   ActualTarget = target;
+  AllowStackPic = allowPic;
   let abc = parseCodeInternal(code);
   return abc.final;
 }

@@ -4,6 +4,7 @@ const outter = require("./out");
 const args = process.argv.slice(2);
 
 let target = outter.Enums.Targets.I386RealMode;
+let picvars = true;
 let file = null;
 
 for (let i = 0; i < args.length; i++) {
@@ -11,7 +12,11 @@ for (let i = 0; i < args.length; i++) {
     if (args[i+1] === "i386_real") target = outter.Enums.Targets.I386RealMode;
     if (args[i+1] === "i386_protected") target = outter.Enums.Targets.I386ProtectedMode;
     i++;
-  } else {
+  }
+  else if (args[1] == "-nopicvars") {
+    picvars = false;
+  } 
+  else {
     file = args[i];
   }
 }
@@ -26,5 +31,5 @@ const fs = require("fs");
 const code = fs.readFileSync(file, "utf8");
 
 // compilar
-const result = outter.parseCode(code, target);
+const result = outter.parseCode(code, target, picvars);
 console.log(result);
