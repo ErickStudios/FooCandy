@@ -13,7 +13,7 @@ for (let i = 0; i < args.length; i++) {
     if (args[i+1] === "i386_protected") target = outter.Enums.Targets.I386ProtectedMode;
     i++;
   }
-  else if (args[1] == "-nopicvars") {
+  else if (args[i] == "-nopicvars") {
     picvars = false;
   } 
   else {
