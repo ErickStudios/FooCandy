@@ -1,0 +1,11 @@
+{
+    "comment": "Librerias de ModuCandy",
+    "Tests": {
+        "type": "moducandy.module.tree",
+        "path": "tests/mods/",
+        "modules": [
+            "Abc",
+            "Def"
+        ]
+    }
+}

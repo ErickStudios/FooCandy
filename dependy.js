@@ -12,49 +12,34 @@ class PathDependy {constructor(logica_nsp, directory) {
     this.directory =                        directory;
 }};
 // funciones
-/** @returns {PathDependy[]} */
 function checkDependenceTree() {
+    activeJson =                            JSON.parse(fs.readFileSync(json_config_path, "utf-8"));
     const results = [];
 
-    // recorrer todas las claves del root
-    for (const key of Object.keys(activeJson)) {
-        const node = activeJson[key];
-
-        // verificar si es objeto y tiene el atributo type correcto
-        if (node && typeof node === "object" && node.type === "moducandy.module.tree") {
-            // recorrer los módulos
-            for (const moduleName of node.modules) {
-                results.push(new PathDependy(
-                    key  + "::" + moduleName, 
-                    path.join(lib_path, node.path, moduleName.toLowerCase() + ".cdy")
-                ));
+    function addModulesFromJson(jsonObj, basePath) {
+        for (const key of Object.keys(jsonObj)) {
+            const node = jsonObj[key];
+            if (node && typeof node === "object" && node.type === "moducandy.module.tree" && Array.isArray(node.modules)) {
+                for (const moduleName of node.modules) {
+                    results.push(new PathDependy(
+                        key + "::" + moduleName,
+                        path.join(basePath, node.path, moduleName.toLowerCase() + ".cdy")
+                    ));
+                }
             }
         }
     }
 
-    if (fs.existsSync(secondary_json_config_path))
-    {
-        activeJson = JSON.parse(fs.readFileSync(secondary_json_config_path, "utf-8"));
+    // primero dependencias primarias
+    addModulesFromJson(activeJson, lib_path);
 
-        // recorrer todas las claves del root
-        for (const key of Object.keys(activeJson)) {
-            const node = activeJson[key];
-
-            // verificar si es objeto y tiene el atributo type correcto
-            if (node && typeof node === "object" && node.type === "moducandy.module.tree") {
-                // recorrer los módulos
-                for (const moduleName of node.modules) {
-                    results.push(new PathDependy(
-                        key  + "::" + moduleName, 
-                        path.join(process.cwd(), node.path, moduleName.toLowerCase() + ".cdy")
-                    ));
-                }
-            }
-        }   
+    // luego secundarias si existen
+    if (fs.existsSync(secondary_json_config_path)) {
+        const secondaryJson = JSON.parse(fs.readFileSync(secondary_json_config_path, "utf-8"));
+        addModulesFromJson(secondaryJson, process.cwd());
     }
 
     return results;
-
 }
 
 module.exports = {checkDependenceTree,PathDependy};
