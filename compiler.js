@@ -5,6 +5,7 @@ const args = process.argv.slice(2);
 
 let target = outter.Enums.Targets.I386RealMode;
 let picvars = true;
+let no_name_upper = false;
 let file = null;
 
 for (let i = 0; i < args.length; i++) {
@@ -16,6 +17,9 @@ for (let i = 0; i < args.length; i++) {
   else if (args[i] == "-nopicvars") {
     picvars = false;
   } 
+  else if (args[i] == "-nonameupper") {
+    no_name_upper = false;
+  }
   else {
     file = args[i];
   }
@@ -31,5 +35,5 @@ const fs = require("fs");
 const code = fs.readFileSync(file, "utf8");
 
 // compilar
-const result = outter.parseCode(code, target, picvars);
+const result = outter.parseCode(code, target, picvars, no_name_upper);
 console.log(result);

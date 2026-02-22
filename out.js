@@ -14,6 +14,7 @@ class Enums {
 
 var ActualTarget = Enums.Targets.I386ProtectedMode;
 var AllowStackPic = true;
+var NoNameUpper = false;
 
 function candyVarToRegister(candyVar) {
   switch (candyVar) {
@@ -151,10 +152,6 @@ DATA_MODUCANDY_DATA_GETEIP:
                   let len = str1.length;
                   let comparate = str2.startsWith(str1) ? 0 : -1;
 
-                    console.log("str2:", str2);
-                    console.log("str1:", str1);
-                    console.log("len:", len);
-
                   if (comparate == 0)
                   {
                     str2 = str2.substring(len);
@@ -254,7 +251,7 @@ DATA_MODUCANDY_DATA_GETEIP:
       else if (c === '(' && code[i + 1] === ')') {
       i++;
 
-      let upper = wordSymbol.toUpperCase();
+      let upper = (NoNameUpper ? wordSymbol : wordSymbol.toUpperCase());
       codeRet += Tabulators + "call " + candyVarToRegister(upper) + "\n";
       }
       else if (c === '<' && code[i + 1] === '=') {
@@ -300,7 +297,7 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators + "jg " + label.toUpperCase() + "\n";
+      codeRet += Tabulators + "jg " + (NoNameUpper ? label : label.toUpperCase()) + "\n";
       }
         else if (c === '<' && wordSymbol === "") {
       i++;
@@ -311,7 +308,7 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators + "jl " + label.toUpperCase() + "\n";
+      codeRet += Tabulators + "jl " + (NoNameUpper ? label : label.toUpperCase()) + "\n";
       }
       else if (c === '+') {
       i++;
@@ -437,10 +434,11 @@ DATA_MODUCANDY_DATA_GETEIP:
   return {codeRet: codeRet , dataSection: dataSection , datasReal: datasReal, datasFunctions: datasFunctions, final:codeRet+(AllowStackPic == true ? dataSection+datasReal+datasFunctions : "") , Symbols:Symbols};
 }
 
-function parseCode(code, target, allowPic)
+function parseCode(code, target, allowPic, no_name_upper)
 {
   ActualTarget = target;
   AllowStackPic = allowPic;
+  NoNameUpper = no_name_upper;
   let abc = parseCodeInternal(code);
   return abc.final;
 }
