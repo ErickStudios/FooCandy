@@ -54,6 +54,7 @@ class VariableModuCandy {
 function parseCodeInternal(code) {
   /** @type { Map<string, number>} */
   let Symbols = new Map();
+  let structsAsMacros = [];
 
   let Tabulators = "   ";
 
@@ -80,6 +81,7 @@ DATA_MODUCANDY_DATA_GETEIP:
 
   let variables = [];
   let offsetActual = 0;
+  let atributes = "";
 
   let inComment = false;
   let typeUsage = false;
@@ -137,6 +139,10 @@ DATA_MODUCANDY_DATA_GETEIP:
               varName += code[i++];
             }
 
+            if (structsAsMacros.includes(typeUse)) {
+              codeRet += "instance_" + structsAsMacros + " varName";
+            }
+            else {
             let compileAsStru = false;
             for (let av of variables)
             {
@@ -189,8 +195,10 @@ DATA_MODUCANDY_DATA_GETEIP:
                 new VariableModuCandy(varName, "u8", offsetActual)
               );
               offsetActual += 1;
-            }}
+            }
           }
+          }
+        }
 
           typeUse = "";
       }
@@ -198,15 +206,58 @@ DATA_MODUCANDY_DATA_GETEIP:
           codeRet += Tabulators + "ret\n";
       }
       else if (wordSymbol == "stru") {
+        let make_struct_macro = false;
+        if (atributes !== "") {
+          if (atributes.includes("useMacros=true")) {
+            make_struct_macro = true;
+          }
+        }
+
+        atributes = "";
+
           i++;
         let candyVar = "";
         while (isLetter(code[i])) {
             candyVar += code[i];
             i++;
         }
+  
+        if (make_struct_macro) {
+          while (code[i] == ' ') { i++; }
+          if (code[i] == '{') {
+            i++;
+            let struct = "";
+            while (code[i] != '}')
+            { 
+                struct += code[i];
+                i++;
+            }
+            let macro_expand = "%macro instance_" + candyVar + " 1\n%1:\n"
+            let regex = /\b([A-Z]\w*)\b\s+\blet\b\s+([\w:.]+)/g;
+
+            let match;
+            let results = [];
+
+            while ((match = regex.exec(struct)) !== null) {
+              macro_expand += `   .${match[2]} ${
+                (match[1] == "Int32" || match[1] == "Uint32") ? "dd" :
+                (match[1] == "Int8" || match[1] == "Uint8") ? "db" : "db"
+              } 0\n`
+              results.push({
+                type: match[1],   // Grupo 1: nombre de la estructura
+                field: match[2]   // Grupo 2: campo con tipo
+              });
+            }
+
+            structsAsMacros.push(candyVar);
+            macro_expand += "%endmacro\n";
+            codeRet += macro_expand;
+          }
+        }
+        else {
         Symbols.set(candyVar + "::__New__", Enums.TypeOfData.Variable);
         variables.push(new VariableModuCandy(candyVar + "::__New__", "stru", 0));
-
+        }
       }
       else if (wordSymbol === "candy") {
         i++;
@@ -241,6 +292,18 @@ DATA_MODUCANDY_DATA_GETEIP:
               i++;
               }
               codeRet += Tabulators + assemblyCode + "\n";
+          }
+      }
+      else if (wordSymbol == "__attr__") {
+          i++;
+          if (code[i] === '"') {
+              let assemblyCode = "";
+              i++;
+              while (code[i] !== '"' && i < code.length) {
+              assemblyCode += code[i];
+              i++;
+              }
+              atributes = assemblyCode;
           }
       }
       else if (c === '/' && code[i + 1] === '/') {

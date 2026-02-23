@@ -1,0 +1,19 @@
+// %macro instance_Systab 1
+// %1:
+//      field1  dw  0
+// %endmacro
+__attr__ "
+    useMacros=true
+"
+stru Systab {
+    Int32 let abc
+    Int32 let def
+}
+
+// instance_Systab Table
+__attr__ "
+    useNasm:true,
+    splitter:_,
+    useStructPlus:true
+"
+Systab let Table

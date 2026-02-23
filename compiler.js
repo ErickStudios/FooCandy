@@ -7,6 +7,7 @@ let target = outter.Enums.Targets.I386RealMode;
 let picvars = true;
 let no_name_upper = false;
 let file = null;
+let outfile = null;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "-f" && args[i+1]) {
@@ -17,6 +18,10 @@ for (let i = 0; i < args.length; i++) {
   else if (args[i] == "-nopicvars") {
     picvars = false;
   } 
+  else if (args[i] == "-o") {
+    outfile = args[i+1];
+    i++;
+  }
   else if (args[i] == "-nonameupper") {
     no_name_upper = true;
   }
@@ -36,4 +41,7 @@ const code = fs.readFileSync(file, "utf8");
 
 // compilar
 const result = outter.parseCode(code, target, picvars, no_name_upper);
-console.log(result);
+if (outfile) {
+  fs.writeFileSync(outfile, result);
+}
+else console.log(result);
