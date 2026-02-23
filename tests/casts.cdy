@@ -1,0 +1,13 @@
+[Uint32]fun()
+[Uint32][fun]()
+[Uint16]fun()
+[Uint16][fun]()
+[Uint8]fun()
+[Uint8][fun]()
+
+[Uint32]var=5
+[Uint32][var]=5
+[Uint16]var=5
+[Uint16][var]=5
+[Uint8]var=5
+[Uint8][var]=5

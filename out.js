@@ -16,7 +16,16 @@ var ActualTarget = Enums.Targets.I386ProtectedMode;
 var AllowStackPic = true;
 var NoNameUpper = false;
 
+/** @param {string} candyVar */
 function candyVarToRegister(candyVar) {
+  if (candyVar.startsWith("[Uint32]") || candyVar.startsWith("[Int32]")) {
+    return "dword " + (candyVar.startsWith("[Uint32]") ? candyVar.substring(8) : candyVar.substring(7));
+  } else if (candyVar.startsWith("[Uint16]") || candyVar.startsWith("[Int16]")) {
+    return "word " + (candyVar.startsWith("[Uint16]") ? candyVar.substring(8) : candyVar.substring(7));
+  } else if (candyVar.startsWith("[Uint8]") || candyVar.startsWith("[Int8]")) {
+    return "byte " + (candyVar.startsWith("[Uint8]") ? candyVar.substring(7) : candyVar.substring(6));
+  }
+
   switch (candyVar) {
     case "r1": return (ActualTarget == Enums.Targets.I386RealMode ? "ax" : "eax");
     case "r2": return (ActualTarget == Enums.Targets.I386RealMode ? "cx" : "ecx");
