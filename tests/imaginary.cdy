@@ -1,0 +1,14 @@
+__attr__ "
+    useMacros=true
+"
+stru MyStruct {
+    Int32 let TestField
+}
+
+__attr__ "
+    org=0x00FF,
+    imaginary=true
+"
+MyStruct let Instance
+
+[Int32][Instance.TestField]=ax

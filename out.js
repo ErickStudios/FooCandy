@@ -12,6 +12,8 @@ class Enums {
   }
 }
 
+var globalSymbolsExpands = new Map();
+
 var ActualTarget = Enums.Targets.I386ProtectedMode;
 var AllowStackPic = true;
 var NoNameUpper = false;
@@ -19,12 +21,19 @@ var NoNameUpper = false;
 /** @param {string} candyVar */
 function candyVarToRegister(candyVar) {
   if (candyVar.startsWith("[Uint32]") || candyVar.startsWith("[Int32]")) {
-    return "dword " + (candyVar.startsWith("[Uint32]") ? candyVar.substring(8) : candyVar.substring(7));
+    return "dword " + candyVarToRegister(candyVar.startsWith("[Uint32]") ? candyVar.substring(8) : candyVar.substring(7));
   } else if (candyVar.startsWith("[Uint16]") || candyVar.startsWith("[Int16]")) {
-    return "word " + (candyVar.startsWith("[Uint16]") ? candyVar.substring(8) : candyVar.substring(7));
+    return "word " + candyVarToRegister(candyVar.startsWith("[Uint16]") ? candyVar.substring(8) : candyVar.substring(7));
   } else if (candyVar.startsWith("[Uint8]") || candyVar.startsWith("[Int8]")) {
-    return "byte " + (candyVar.startsWith("[Uint8]") ? candyVar.substring(7) : candyVar.substring(6));
+    return "byte " + candyVarToRegister(candyVar.startsWith("[Uint8]") ? candyVar.substring(7) : candyVar.substring(6));
   }
+  
+  if (candyVar.startsWith("[") && candyVar.endsWith("]"))
+  {
+    return "[" + candyVarToRegister(candyVar.slice(1, -1)) + "]";
+  }
+
+  if (globalSymbolsExpands.has(candyVar)) return globalSymbolsExpands.get(candyVar)
 
   switch (candyVar) {
     case "r1": return (ActualTarget == Enums.Targets.I386RealMode ? "ax" : "eax");
@@ -64,6 +73,7 @@ function parseCodeInternal(code) {
   /** @type { Map<string, number>} */
   let Symbols = new Map();
   let structsAsMacros = [];
+  let structsExp = new Map();
 
   let Tabulators = "   ";
 
@@ -148,6 +158,24 @@ DATA_MODUCANDY_DATA_GETEIP:
               varName += code[i++];
             }
 
+            let imaginaryFinded = false;
+
+            if (atributes.includes("imaginary=true"))
+            {
+              if (atributes.includes("org=")) {
+                let org = Number(atributes.split("org=")[1].split(",")[0]);
+
+                if (structsExp.has(typeUse)) {
+                  for (const abc of structsExp.get(typeUse))
+                  {
+                    globalSymbolsExpands.set(varName + "." + abc.field, (org + abc.offset).toString())
+                  }
+                  imaginaryFinded = true;
+                }
+              }
+            }
+
+            if (!imaginaryFinded) {
             if (structsAsMacros.includes(typeUse)) {
               codeRet += "instance_" + typeUse + " " + varName;
             }
@@ -208,7 +236,7 @@ DATA_MODUCANDY_DATA_GETEIP:
           }
           }
         }
-
+      }
           typeUse = "";
       }
       if (wordSymbol === "return") {
@@ -241,7 +269,9 @@ DATA_MODUCANDY_DATA_GETEIP:
                 struct += code[i];
                 i++;
             }
+            let offsets_expand = "";
             let macro_expand = "%macro instance_" + candyVar + " 1\n%1:\n"
+            let offset_struct = 0;
             let regex = /\b([A-Z]\w*)\b\s+\blet\b\s+([\w:.]+)/g;
 
             let match;
@@ -252,16 +282,23 @@ DATA_MODUCANDY_DATA_GETEIP:
                 (match[1] == "Int32" || match[1] == "Uint32") ? "dd" :
                 (match[1] == "Int16" || match[1] == "Uint16") ? "dw" :
                 (match[1] == "Int8" || match[1] == "Uint8") ? "db" : "db"
-              } 0\n`
+              } 0\n`;
+              offsets_expand += `Offset_${candyVar}_${match[2]} equ ${offset_struct.toString()}\n`
               results.push({
                 type: match[1],   // Grupo 1: nombre de la estructura
-                field: match[2]   // Grupo 2: campo con tipo
+                field: match[2],   // Grupo 2: campo con tipo
+                offset: offset_struct
               });
+              offset_struct += (match[1] == "Int32" || match[1] == "Uint32") ? 4 :
+                (match[1] == "Int16" || match[1] == "Uint16") ? 2 :
+                (match[1] == "Int8" || match[1] == "Uint8") ? 1 : 1;
             }
 
             structsAsMacros.push(candyVar);
+            structsExp.set(candyVar, results);
             macro_expand += "%endmacro\n";
             codeRet += macro_expand;
+            codeRet += offsets_expand;
           }
         }
         else {
@@ -509,6 +546,7 @@ DATA_MODUCANDY_DATA_GETEIP:
 
 function parseCode(code, target, allowPic, no_name_upper)
 {
+  globalSymbolsExpands.clear();
   ActualTarget = target;
   AllowStackPic = allowPic;
   NoNameUpper = no_name_upper;
