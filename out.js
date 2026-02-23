@@ -241,6 +241,7 @@ DATA_MODUCANDY_DATA_GETEIP:
             while ((match = regex.exec(struct)) !== null) {
               macro_expand += `   .${match[2]} ${
                 (match[1] == "Int32" || match[1] == "Uint32") ? "dd" :
+                (match[1] == "Int16" || match[1] == "Uint16") ? "dw" :
                 (match[1] == "Int8" || match[1] == "Uint8") ? "db" : "db"
               } 0\n`
               results.push({
