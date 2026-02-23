@@ -140,7 +140,7 @@ DATA_MODUCANDY_DATA_GETEIP:
             }
 
             if (structsAsMacros.includes(typeUse)) {
-              codeRet += "instance_" + structsAsMacros + " varName";
+              codeRet += "instance_" + typeUse + " " + varName;
             }
             else {
             let compileAsStru = false;
