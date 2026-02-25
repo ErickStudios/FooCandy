@@ -8,7 +8,150 @@ class Enums {
   };
   static Targets = {
     I386RealMode: 0,
-    I386ProtectedMode: 0
+    I386ProtectedMode: 1,
+    ARMv7: 2,
+    ARM64: 3
+  }
+}
+
+var RegisterMaps = {
+  [Enums.Targets.I386RealMode]: {
+    r1: "ax", r2: "cx", r3: "dx", r4: "bx", r5: "sp", r6: "bp", r7: "si", r8: "di"
+  },
+  [Enums.Targets.I386ProtectedMode]: {
+    r1: "eax", r2: "ecx", r3: "edx", r4: "ebx", r5: "esp", r6: "ebp", r7: "esi", r8: "edi"
+  },
+  [Enums.Targets.ARMv7]: {
+    r1: "r0", r2: "r1", r3: "r2", r4: "r3", r5: "sp", r6: "r4", r7: "r5", r8: "r6"
+  },
+  [Enums.Targets.ARM64]: {
+    r1: "x0", r2: "x1", r3: "x2", r4: "x3", r5: "sp", r6: "x4", r7: "x5", r8: "x6"
+  }
+};
+
+function emitAdd(dest, src) {
+  switch (ActualTarget) {
+    case Enums.Targets.I386RealMode:
+    case Enums.Targets.I386ProtectedMode:
+      return `add ${dest},${src}\n`;
+    case Enums.Targets.ARMv7:
+      return `add ${dest}, ${dest}, ${src}\n`;
+
+    case Enums.Targets.ARM64:
+      return `add ${dest}, ${dest}, ${src}\n`;
+  }
+}
+function emitSub(dest, src) {
+  switch (ActualTarget) {
+
+    case Enums.Targets.I386RealMode:
+    case Enums.Targets.I386ProtectedMode:
+      return `sub ${dest},${src}\n`;
+
+    case Enums.Targets.ARMv7:
+      return `sub ${dest}, ${dest}, ${src}\n`;
+
+    case Enums.Targets.ARM64:
+      return `sub ${dest}, ${dest}, ${src}\n`;
+  }
+}
+function emitMul(dest, src) {
+  switch (ActualTarget) {
+
+    case Enums.Targets.I386ProtectedMode:
+    case Enums.Targets.I386RealMode:
+      return `imul ${dest},${src}\n`;
+
+    case Enums.Targets.ARMv7:
+      return `mul ${dest}, ${dest}, ${src}\n`;
+
+    case Enums.Targets.ARM64:
+      return `mul ${dest}, ${dest}, ${src}\n`;
+  }
+}
+function emitDiv(dest, src, Tabulators) {
+  switch (ActualTarget) {
+
+    case Enums.Targets.I386ProtectedMode:
+      return `push eax
+${Tabulators}push edx
+${Tabulators}mov eax, ${dest}
+${Tabulators}cdq
+${Tabulators}idiv ${src}
+${Tabulators}mov ${dest}, eax
+${Tabulators}pop edx
+${Tabulators}pop eax
+`;
+
+    case Enums.Targets.ARMv7:
+      return `sdiv ${dest}, ${dest}, ${src}\n`;
+
+    case Enums.Targets.ARM64:
+      return `sdiv ${dest}, ${dest}, ${src}\n`;
+  }
+}
+function emitJumpEQ(label) {
+  switch (ActualTarget) {
+
+    case Enums.Targets.I386RealMode:
+    case Enums.Targets.I386ProtectedMode:
+      return `je ${label}\n`;
+
+    case Enums.Targets.ARMv7:
+    case Enums.Targets.ARM64:
+      return `beq ${label}\n`;
+  }
+}
+function emitPush(reg) {
+  switch (ActualTarget) {
+
+    case Enums.Targets.I386RealMode:
+    case Enums.Targets.I386ProtectedMode:
+      return `push ${reg}\n`;
+
+    case Enums.Targets.ARMv7:
+      return `push {${reg}}\n`;
+
+    case Enums.Targets.ARM64:
+      return `str ${reg}, [sp, #-16]!\n`;
+  }
+}
+function emitPop(reg) {
+  switch (ActualTarget) {
+
+    case Enums.Targets.I386RealMode:
+    case Enums.Targets.I386ProtectedMode:
+      return `pop ${reg}\n`;
+
+    case Enums.Targets.ARMv7:
+      return `pop {${reg}}\n`;
+
+    case Enums.Targets.ARM64:
+      return `ldr ${reg}, [sp], #16\n`;
+  }
+}
+function emitJumpGT(label) {
+  switch (ActualTarget) {
+
+    case Enums.Targets.I386RealMode:
+    case Enums.Targets.I386ProtectedMode:
+      return `jg ${label}\n`;
+
+    case Enums.Targets.ARMv7:
+    case Enums.Targets.ARM64:
+      return `bgt ${label}\n`;
+  }
+}
+function emitJumpLT(label) {
+  switch (ActualTarget) {
+
+    case Enums.Targets.I386RealMode:
+    case Enums.Targets.I386ProtectedMode:
+      return `jl ${label}\n`;
+
+    case Enums.Targets.ARMv7:
+    case Enums.Targets.ARM64:
+      return `blt ${label}\n`;
   }
 }
 
@@ -35,17 +178,13 @@ function candyVarToRegister(candyVar) {
 
   if (globalSymbolsExpands.has(candyVar)) return globalSymbolsExpands.get(candyVar)
 
-  switch (candyVar) {
-    case "r1": return (ActualTarget == Enums.Targets.I386RealMode ? "ax" : "eax");
-    case "r2": return (ActualTarget == Enums.Targets.I386RealMode ? "cx" : "ecx");
-    case "r3": return (ActualTarget == Enums.Targets.I386RealMode ? "dx" : "edx");
-    case "r4": return (ActualTarget == Enums.Targets.I386RealMode ? "bx" : "ebx");
-    case "r5": return (ActualTarget == Enums.Targets.I386RealMode ? "sp" : "esp");
-    case "r6": return (ActualTarget == Enums.Targets.I386RealMode ? "bp" : "ebp");
-    case "r7": return (ActualTarget == Enums.Targets.I386RealMode ? "si" : "esi");
-    case "r8": return (ActualTarget == Enums.Targets.I386RealMode ? "di" : "edi");
-    default: return candyVar;
+  const map = RegisterMaps[ActualTarget];
+
+  if (map && map[candyVar]) {
+    return map[candyVar];
   }
+
+  return candyVar;
 }
 
 function isLetter(c) {
@@ -164,6 +303,7 @@ DATA_MODUCANDY_DATA_GETEIP:
             {
               if (atributes.includes("org=")) {
                 let org = Number(atributes.split("org=")[1].split(",")[0]);
+                  globalSymbolsExpands.set(varName, org.toString())
 
                 if (structsExp.has(typeUse)) {
                   for (const abc of structsExp.get(typeUse))
@@ -240,7 +380,27 @@ DATA_MODUCANDY_DATA_GETEIP:
           typeUse = "";
       }
       if (wordSymbol === "return") {
-          codeRet += Tabulators + "ret\n";
+          codeRet += Tabulators + ((ActualTarget == Enums.Targets.ARMv7) || (ActualTarget == Enums.Targets.ARM64) ? "bx lr\n" :  "ret\n");
+      }
+      else if (wordSymbol == "__pragma__") {
+        i++;
+        if (code.slice(i, -1).startsWith("ifarch=")) {
+          i+= 7;
+          let candyVar = "";
+          while (isLetter(code[i])) {
+              candyVar += code[i];
+              i++;
+          }
+
+          if (ActualTargetStr != candyVar) {
+            let str_engached = "";
+            while (!str_engached.endsWith("__endif__"))
+            {
+              str_engached += code[i];
+              i++;
+            }
+          }
+        }
       }
       else if (wordSymbol == "stru") {
         let make_struct_macro = false;
@@ -362,7 +522,7 @@ DATA_MODUCANDY_DATA_GETEIP:
       i++;
 
       let upper = (NoNameUpper ? wordSymbol : wordSymbol.toUpperCase());
-      codeRet += Tabulators + "call " + candyVarToRegister(upper) + "\n";
+      codeRet += Tabulators + ((ActualTarget == Enums.Targets.ARMv7) || (ActualTarget == Enums.Targets.ARM64)  ? "bl " : "call ") + candyVarToRegister(upper) + "\n";
       }
       else if (c === '<' && code[i + 1] === '=') {
       i += 2;
@@ -407,7 +567,7 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators + "jg " + (NoNameUpper ? label : label.toUpperCase()) + "\n";
+      codeRet += Tabulators + emitJumpGT((NoNameUpper ? label : label.toUpperCase()));
       }
         else if (c === '<' && wordSymbol === "") {
       i++;
@@ -418,7 +578,7 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators + "jl " + (NoNameUpper ? label : label.toUpperCase()) + "\n";
+      codeRet += Tabulators + emitJumpLT(NoNameUpper ? label : label.toUpperCase());
       }
       else if (c === '+') {
       i++;
@@ -429,12 +589,7 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators +
-          "add " +
-          candyVarToRegister(wordSymbol) +
-          "," +
-          candyVarToRegister(candyVar) +
-          "\n";
+      codeRet += Tabulators + emitAdd(candyVarToRegister(wordSymbol), candyVarToRegister(candyVar));
       }
       else if (c === '*') {
       i++;
@@ -445,12 +600,7 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators +
-          "SimpleMultiplication " +
-          candyVarToRegister(wordSymbol) +
-          "," +
-          candyVarToRegister(candyVar) +
-          "\n";
+      codeRet += Tabulators + emitMul(candyVarToRegister(wordSymbol), candyVarToRegister(candyVar));
       }
       else if (c === '/') {
       i++;
@@ -461,15 +611,7 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators +
-          "push eax\n" + Tabulators +
-          "push edx\n" + Tabulators +
-          "mov eax," + candyVarToRegister(wordSymbol) + "\n" + Tabulators +
-          "cdq\n" + Tabulators +
-          "idiv " + candyVarToRegister(candyVar) + "\n" + Tabulators +
-          "mov " + candyVarToRegister(wordSymbol) + ",eax\n" + Tabulators +
-          "pop edx\n" + Tabulators +
-          "pop eax\n";
+      codeRet += Tabulators + emitDiv(candyVarToRegister(wordSymbol), candyVarToRegister(candyVar), Tabulators);
       }
       else if (c === '-' && code[i + 1] === '>') {
       i += 2;
@@ -480,18 +622,12 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators +
-          "pop " +
-          candyVarToRegister(candyVar) +
-          "\n";
+      codeRet += Tabulators + emitPop(candyVarToRegister(candyVar));
       }
       else if ((c === '<' && code[i + 1] === '-') && wordSymbol !== "") {
       i += 2;
 
-      codeRet += Tabulators +
-          "push " +
-          candyVarToRegister(wordSymbol) +
-          "\n";
+      codeRet += Tabulators + emitPush(candyVarToRegister(wordSymbol));
       }
       else if (c === '-') {
       i++;
@@ -502,12 +638,7 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators +
-          "sub " +
-          candyVarToRegister(wordSymbol) +
-          "," +
-          candyVarToRegister(candyVar) +
-          "\n";
+      codeRet += Tabulators + emitSub(candyVarToRegister(wordSymbol), candyVarToRegister(candyVar));
       }
       else if (c === '=' && wordSymbol !== "") {
       i++;
@@ -518,7 +649,7 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators +
+      codeRet += Tabulators + 
           "mov " +
           candyVarToRegister(wordSymbol) +
           "," +
@@ -534,8 +665,9 @@ DATA_MODUCANDY_DATA_GETEIP:
           i++;
       }
 
-      codeRet += Tabulators + "je " + label.toUpperCase() + "\n";
+      codeRet += Tabulators + emitJumpEQ(NoNameUpper ? label : label.toUpperCase());
       }
+  
     
       wordSymbol = "";
   }
@@ -544,9 +676,10 @@ DATA_MODUCANDY_DATA_GETEIP:
   return {codeRet: codeRet , dataSection: dataSection , datasReal: datasReal, datasFunctions: datasFunctions, final:codeRet+(AllowStackPic == true ? dataSection+datasReal+datasFunctions : "") , Symbols:Symbols};
 }
 
-function parseCode(code, target, allowPic, no_name_upper)
+function parseCode(code, target, allowPic, no_name_upper, archstr)
 {
   globalSymbolsExpands.clear();
+  ActualTargetStr = archstr;
   ActualTarget = target;
   AllowStackPic = allowPic;
   NoNameUpper = no_name_upper;

@@ -8,11 +8,14 @@ let picvars = true;
 let no_name_upper = false;
 let file = null;
 let outfile = null;
+let archstr = "i386_protected";
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "-f" && args[i+1]) {
     if (args[i+1] === "i386_real") target = outter.Enums.Targets.I386RealMode;
-    if (args[i+1] === "i386_protected") target = outter.Enums.Targets.I386ProtectedMode;
+    else if (args[i+1] === "i386_protected") target = outter.Enums.Targets.I386ProtectedMode;
+    else if (args[i+1] === "ARMv7") target = outter.Enums.Targets.ARMv7;
+    archstr = args[i+1];
     i++;
   }
   else if (args[i] == "-nopicvars") {
@@ -40,7 +43,7 @@ const fs = require("fs");
 const code = fs.readFileSync(file, "utf8");
 
 // compilar
-const result = outter.parseCode(code, target, picvars, no_name_upper);
+const result = outter.parseCode(code, target, picvars, no_name_upper, archstr);
 if (outfile) {
   fs.writeFileSync(outfile, result);
 }

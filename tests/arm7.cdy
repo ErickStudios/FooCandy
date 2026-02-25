@@ -1,0 +1,19 @@
+__pragma__ ifarch=i386_protected
+__endif__
+
+Int32 fn Arm7Int() {
+
+}
+
+return
+// comentario
+Arm7Int()
+r1?r2
+>xd
+<xd
+r1+r2
+r1*r2
+r1/r2
+r1-r2
+r1=r2
+=xd
