@@ -1,19 +1,22 @@
-__pragma__ ifarch=i386_protected
-__endif__
+safe jumps _start
 
-Int32 fn Arm7Int() {
+candy Lib::Math
 
+Void fn _start() {
+    unsafe "
+       ldr x29, =stack_top   // usar x29 temporalmente
+        mov sp, x29           // inicializar stack pointer
+    "
+    r1=2 r2=6 r1<- r2<-
+    Lib::Math::SimplePow()
+    return
 }
 
-return
-// comentario
-Arm7Int()
-r1?r2
->xd
-<xd
-r1+r2
-r1*r2
-r1/r2
-r1-r2
-r1=r2
-=xd
+unsafe "
+// reserva 1KB de stack
+.section .bss
+.align 16
+stack_space:
+   .skip 1024
+stack_top:
+"

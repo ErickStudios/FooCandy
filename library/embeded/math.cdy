@@ -4,9 +4,16 @@ BuiltIn_Void fn Lib::Math::SimplePowEnd() {
 }
 /// funcion del loop de potencia
 BuiltIn_Void fn Lib::Math::SimplePowLoop() {
-    r1*r3 unsafe "dec ecx" r4=0 r2?r4 =Lib::Math::SimplePowEnd unsafe "jmp LIB::MATH::SIMPLEPOWLOOP" 
+    // incrementar potencia
+    r1*r3 safe increments r2
+    // verificar si no pasa
+    r4=0 r2?r4 =Lib::Math::SimplePowEnd
+
+    // siguiente loop
+    safe jumps Lib::Math::SimplePow
 }
 /// funcion de potencia
 BuiltIn_i32 fn Lib::Math::SimplePow() {
-    ->r3 ->r2 ->r1 r3<- r3=r1 unsafe "jmp LIB::MATH::SIMPLEPOWLOOP"
+    ->r3 ->r2 ->r1 r3<- r3=r1
+    safe jumps Lib::Math::SimplePowLoop
 }
