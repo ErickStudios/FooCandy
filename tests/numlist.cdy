@@ -1,0 +1,12 @@
+// declarar enum
+safe numlist MyNumList<Uint16>
+{
+    member1=42,
+    member2=56
+}
+
+// funcion principal
+Void fn main() {
+    r1=MyNumList::member1
+    return
+}

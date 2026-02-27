@@ -447,6 +447,41 @@ DATA_MODUCANDY_DATA_GETEIP:
                   codeRet += Tabulators + emitSub(candyVarToRegister(candyVar), "1");
                   break;
               }
+              // lista de numeros
+              case "numlist": {
+                i++;
+                let Name = "";
+                while (isLetter(code[i])) Name += code[i++];
+                if (code[i] == '<')
+                {
+                  i++;
+                  let type = "";
+                  while (code[i] != ">") type += code[i++];
+                  i++;
+                  while (code[i].replaceAll("\n", "").replaceAll("\r", "").replaceAll("\t", "").replaceAll(" ", "") == "") i++;
+                  if (code[i] == '{') {
+                    i++;
+                    let enumE = "";
+                    while (code[i] != "}") {
+                      enumE += code[i];
+                      i++;
+                    }
+                    let fields = enumE.replaceAll("\n", "").replaceAll("\r", "").replaceAll("\t", "").replaceAll(" ", "").split(",");
+                    let fieldsOffset = 0;
+                    for (const member of fields) {
+                      if (member.includes("="))
+                      {
+                        globalSymbolsExpands.set(Name + "::" + member.split("=")[0], member.split("=")[1]);
+                      }
+                      else {
+                        globalSymbolsExpands.set(Name + "::" + member.split("=")[0], fieldsOffset.toString());
+                        fieldsOffset++;
+                      }
+                    }
+                  }
+                }
+                break;
+              }
               // salto incondicional
               case "jumps": {
                   i++;
